@@ -20,6 +20,9 @@
  */
 package apa7.bitcoin.javabitcoindrpcclient;
 
+import apa7.bitcoin.data.SinceTransactions;
+import apa7.bitcoin.data.TransactionData;
+import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -86,6 +89,9 @@ public interface BitcoindRpcClient {
      * @return BlockData
      */
     BlockData getBlockData(String blockHash) throws Exception;
+
+    @SuppressWarnings({"unchecked"})
+    SinceTransactions listSinceBlock(int height, int confirmNum) throws Exception;
 
     /**
      * The getblock RPC gets a block with a particular header hash from the local block database as a serialized block.
@@ -672,8 +678,9 @@ public interface BitcoindRpcClient {
      *
      * @param txId The TXID of the transaction to get details about.
      * @see <a href="https://bitcoin.org/en/developer-reference#gettransaction">gettransaction</a>
+     * @return
      */
-    Transaction getTransaction(String txId);
+    TransactionData getTransaction(String txId) throws IOException;
 
     /**
      * The getunconfirmedbalance RPC returns the wallet’s total unconfirmed balance.
@@ -815,31 +822,13 @@ public interface BitcoindRpcClient {
      */
     List<ReceivedAddress> listReceivedByAddress(int minConf, boolean includeEmpty) throws GenericRpcException;
 
-    /**
-     * The listsinceblock RPC gets all transactions affecting the wallet which have occurred since a particular block, plus the header hash of a block at a particular depth.
-     *
-     * @return An object containing an array of transactions and the lastblock field
-     * @see <a href="https://bitcoin.org/en/developer-reference#listsinceblock">listsinceblock</a>
-     */
+    @SuppressWarnings("unchecked")
     TransactionsSinceBlock listSinceBlock() throws GenericRpcException;
 
-    /**
-     * The listsinceblock RPC gets all transactions affecting the wallet which have occurred since a particular block, plus the header hash of a block at a particular depth.
-     *
-     * @param blockHash The hash of a block header encoded as hex in RPC byte order.
-     * @return An object containing an array of transactions and the lastblock field
-     * @see <a href="https://bitcoin.org/en/developer-reference#listsinceblock">listsinceblock</a>
-     */
+    @SuppressWarnings("unchecked")
     TransactionsSinceBlock listSinceBlock(String blockHash) throws GenericRpcException;
 
-    /**
-     * The listsinceblock RPC gets all transactions affecting the wallet which have occurred since a particular block, plus the header hash of a block at a particular depth.
-     *
-     * @param blockHash           The hash of a block header encoded as hex in RPC byte order.
-     * @param targetConfirmations Sets the lastblock field of the results to the header hash of a block with this many confirmations.
-     * @return An object containing an array of transactions and the lastblock field
-     * @see <a href="https://bitcoin.org/en/developer-reference#listsinceblock">listsinceblock</a>
-     */
+    @SuppressWarnings("unchecked")
     TransactionsSinceBlock listSinceBlock(String blockHash, int targetConfirmations) throws GenericRpcException;
 
     /**

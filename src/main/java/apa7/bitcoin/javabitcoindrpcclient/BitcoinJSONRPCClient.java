@@ -20,13 +20,23 @@
  */
 package apa7.bitcoin.javabitcoindrpcclient;
 
+import apa7.bitcoin.data.BlockData;
+import apa7.bitcoin.data.BlockResult;
+import apa7.bitcoin.data.Response;
+import apa7.bitcoin.data.SinceTransactions;
+import apa7.bitcoin.data.TransactionData;
+import apa7.bitcoin.krotjson.Base64Coder;
+import apa7.bitcoin.krotjson.HexCoder;
+import apa7.bitcoin.krotjson.JSON;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -45,16 +55,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
-
-import apa7.bitcoin.data.BlockData;
-import apa7.bitcoin.data.BlockResult;
-import apa7.bitcoin.krotjson.Base64Coder;
-import apa7.bitcoin.krotjson.HexCoder;
-import apa7.bitcoin.krotjson.JSON;
 
 /**
  * @author Mikhail Yevchenko m.ṥῥẚɱ.ѓѐḿởύḙ at azazar.com Small modifications by
@@ -182,6 +185,23 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
             o.write(buffer, 0, nr);
         }
         return o.toByteArray();
+    }
+
+    public Response loadResp(InputStream in, Type type) throws Exception {
+        boolean close = true;
+        try {
+            String r = new String(loadStream(in, close), QUERY_CHARSET);
+            logger.log(Level.FINE, "Bitcoin JSON-RPC response:\n{0}", r);
+            try {
+                Response response = new Gson().fromJson(r, type);
+                return response;
+            } catch (ClassCastException ex) {
+                throw new BitcoinRPCException("Invalid server response format (data: \"" + r + "\")");
+            }
+        } finally {
+            if (close)
+                in.close();
+        }
     }
 
     @SuppressWarnings("rawtypes")
@@ -375,6 +395,21 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
             if (close)
                 in.close();
         }
+    }
+
+    @Override
+    @SuppressWarnings({"unchecked"})
+    public SinceTransactions listSinceBlock(int height, int confirmNum) throws Exception {
+        InputStream blockhashIn = queryStream("getblockhash", height);
+        Response<String> blockHashResp = loadResp(blockhashIn, new TypeToken<Response<String>>() {
+        }.getType());
+        String txHash = blockHashResp.getResult();
+        blockhashIn.close();
+        InputStream sinceblockIn = queryStream("listsinceblock", txHash, confirmNum);
+        Response<SinceTransactions> sinceblockResp = loadResp(sinceblockIn, new TypeToken<Response<SinceTransactions>>() {
+        }.getType());
+        sinceblockIn.close();
+        return sinceblockResp.getResult();
     }
 
     @Override
@@ -939,17 +974,21 @@ public class BitcoinJSONRPCClient implements BitcoindRpcClient {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Transaction getTransaction(String txId) {
-
-        TransactionWrapper tx = new TransactionWrapper((Map<String, ?>) query("gettransaction", txId));
-
-        // [#88] Request for invalid Tx should fail
-        // https://github.com/Polve/JavaBitcoindRpcClient/issues/88
-        RawTransaction rawTx = tx.raw();
-        if (rawTx == null || rawTx.vIn().isEmpty() || rawTx.vOut().isEmpty()) {
-            throw new BitcoinRPCException("Invalid Tx: " + txId);
+    public TransactionData getTransaction(String txId) throws IOException {
+        InputStream in = queryStream("gettransaction", txId);
+        TransactionData tx = null;
+        try {
+            Type type = new TypeToken<Response<TransactionData>>() {
+            }.getType();
+            Response<TransactionData> response = loadResp(in, type);
+            return response.getResult();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
+        in.close();
+        /*if (rawTx == null || rawTx.vIn().isEmpty() || rawTx.vOut().isEmpty()) {
+            throw new BitcoinRPCException("Invalid Tx: " + txId);
+        }*/
         return tx;
     }
 

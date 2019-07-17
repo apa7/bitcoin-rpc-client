@@ -4,10 +4,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 
-/**
- * Created by apa7 on 2019/7/5.
- * Maintainer:
- */
 public class BlockData implements Serializable {
 
     private String hash;
@@ -20,7 +16,7 @@ public class BlockData implements Serializable {
 
     private int version;
 
-    private List<BlockTransactionData> tx;
+    private List<BlockTransaction> tx;
 
     private long nonce;
 
@@ -70,11 +66,11 @@ public class BlockData implements Serializable {
         this.version = version;
     }
 
-    public List<BlockTransactionData> getTx() {
+    public List<BlockTransaction> getTx() {
         return tx;
     }
 
-    public void setTx(List<BlockTransactionData> tx) {
+    public void setTx(List<BlockTransaction> tx) {
         this.tx = tx;
     }
 

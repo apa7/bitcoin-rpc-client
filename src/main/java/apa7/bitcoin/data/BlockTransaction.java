@@ -3,7 +3,7 @@ package apa7.bitcoin.data;
 import java.io.Serializable;
 import java.util.List;
 
-public class BlockTransactionData implements Serializable {
+public class BlockTransaction implements Serializable {
 
 //    String hex;
 
@@ -18,6 +18,12 @@ public class BlockTransactionData implements Serializable {
     private long size;
 
     private long vsize;
+
+    private String blockhash;
+
+    private Long blocktime;
+
+//    private List<TxInput> in;
 
     /**
      * This method should be replaced someday
